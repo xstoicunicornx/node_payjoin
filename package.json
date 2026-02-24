@@ -1,0 +1,23 @@
+{
+  "name": "payjoin",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "uniffi-bindgen-react-native": "github:spacebear21/uniffi-bindgen-react-native#update-uniffi-0.30-wasm"
+  },
+  "dependencies": {
+    "assert": "^2.1.0",
+    "payjoin": "^0.1.0",
+    "payjoin-test-utils": "file:../../payjoin/rust-payjoin/payjoin-ffi/javascript/test-utils"
+  }
+}
