@@ -51,11 +51,18 @@ export class Receiver {
     this.persister = new InMemoryReceiverPersisterAsync(1);
   }
 
-  async get_balance() {
-    const balance = await this.wallet.command([
-      { method: "getbalance", parameters: [] },
-    ]);
+  async wallet_command(method: string, parameters: any[] = []) {
+    const result = await this.wallet.command([{ method, parameters }]);
+    return result[0];
+  }
+
+  async getbalance() {
+    const balance = await this.wallet_command("getbalance");
     console.log("receiver balance", balance);
     return balance;
+  }
+
+  async getnewaddress() {
+    const address = await this.wallet.command([]);
   }
 }

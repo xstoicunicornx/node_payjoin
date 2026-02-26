@@ -7,10 +7,10 @@ async function main() {
   await uniffiInitAsync();
 
   const receiver = new Receiver();
-  receiver.get_balance();
+  receiver.getbalance();
 
   const sender = new Sender();
-  sender.get_balance();
+  sender.getbalance();
 
   // const persister = new InMemoryReceiverPersisterAsync(1);
   // const address = "2MuyMrZHkbHbfjudmKUy45dU4P17pjG2szK";
