@@ -17,9 +17,10 @@
     "uniffi-bindgen-react-native": "github:spacebear21/uniffi-bindgen-react-native#update-uniffi-0.30-wasm"
   },
   "dependencies": {
-    "@xstoicunicornx/payjoin_test": "0.1.4",
+    "@xstoicunicornx/payjoin_test": "0.1.5",
     "assert": "2.1.0",
     "bitcoin-core": "5.0.0",
+    "https-proxy-agent": "^7.0.6",
     "payjoin-test-utils": "file:../../payjoin/rust-payjoin/payjoin-ffi/javascript/test-utils"
   }
 }

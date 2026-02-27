@@ -8,6 +8,10 @@ async function main() {
 
   const receiver = new Receiver();
   receiver.getbalance();
+  const payjoin_receive = await receiver.getNewPayjoinReceive();
+  const uri = payjoin_receive.pjUri();
+  console.log(uri.asString());
+  receiver.tester();
 
   const sender = new Sender();
   sender.getbalance();
