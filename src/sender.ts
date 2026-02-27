@@ -6,8 +6,8 @@ const rpcuser = "admin1";
 const rpcpassword = "123";
 const rpchost = "http://localhost:18443";
 
-const pj_directory = "https://payjo.in";
-const ohttp_relays = [
+const pjDirectory = "https://payjo.in";
+const ohttpRelays = [
   "https://pj.benalleng.com",
   "https://pj.bobspacebkk.com",
   "https://ohttp.achow101.com",
@@ -51,13 +51,13 @@ export class Sender {
     this.persister = new InMemorySenderPersisterAsync(1);
   }
 
-  async wallet_command(method: string, parameters: any[] = []) {
+  async walletCommand(method: string, parameters: any[] = []) {
     const result = await this.wallet.command([{ method, parameters }]);
     return result[0];
   }
 
   async getbalance() {
-    const balance = await this.wallet_command("getbalance");
+    const balance = await this.walletCommand("getbalance");
     console.log("sender balance", balance);
     return balance;
   }
