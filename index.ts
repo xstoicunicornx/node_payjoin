@@ -1,5 +1,4 @@
-import { payjoin, uniffiInitAsync } from "@xstoicunicornx/payjoin_test";
-import { originalPsbt } from "payjoin-test-utils";
+import { uniffiInitAsync } from "@xstoicunicornx/payjoin_test";
 import { Receiver } from "./src/receiver.ts";
 import { Sender } from "./src/sender.ts";
 
@@ -9,8 +8,8 @@ async function main() {
   const receiver = new Receiver();
   receiver.getbalance();
   const amount = BigInt(10000);
-  const address = await receiver.getnewaddress();
-  await receiver.initialize(BigInt(10000), BigInt(1772222563));
+  const expiration = BigInt(Math.floor(Date.now() / 1000) + 60 * 5); // 5 min from now
+  await receiver.initialize(amount, expiration);
   const uri = receiver.getPjUri();
   console.log("uri", uri.pjEndpoint());
   receiver.poll();

@@ -1,6 +1,5 @@
 import { payjoin } from "@xstoicunicornx/payjoin_test";
 import { fetchOhttpKeys, sleep } from "./utils.ts";
-// import { originalPsbt, TestServices, RpcClient } from "payjoin-test-utils";
 import Client from "bitcoin-core";
 import { ReceiverBuilderInterface } from "@xstoicunicornx/payjoin_test/dist/generated/payjoin";
 

@@ -13,6 +13,7 @@ export function fetchOhttpKeys(
     pj_directory,
   );
 
+  // TODO: tru to use fetch instead
   // proxy request through relay
   const agent = new HttpsProxyAgent(relay.href, {
     headers: {
@@ -36,7 +37,9 @@ export function fetchOhttpKeys(
           // process response body
           res.on("end", () => {
             // copy data into ArrayBuffer
-            const pairs = body.match(/[\da-f]{2}/gi).map((b) => b);
+            const pairs = body.match(/[\da-f]{2}/gi);
+            if (!pairs)
+              throw Error("fetching ohttp keys return invalid response");
             const buffer = new ArrayBuffer(pairs.length);
             const view = new Uint8Array(buffer);
             for (let i = 0; i < buffer.byteLength; i++)

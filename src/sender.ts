@@ -1,13 +1,11 @@
-import { payjoin, uniffiInitAsync } from "@xstoicunicornx/payjoin_test";
-import { originalPsbt } from "payjoin-test-utils";
+import { payjoin } from "@xstoicunicornx/payjoin_test";
 import Client from "bitcoin-core";
-import { postPjRequest } from "./utils";
 
 const rpcuser = "admin1";
 const rpcpassword = "123";
 const rpchost = "http://localhost:18443";
 
-const pjDirectory = "https://payjo.in";
+// const pjDirectory = "https://payjo.in";
 const ohttpRelays = [
   "https://pj.benalleng.com",
   "https://pj.bobspacebkk.com",
@@ -100,6 +98,7 @@ export class Sender {
       console.log("pjuri", pjUri.pjEndpoint());
       const address = pjUri.address();
       const amount = pjUri.amountSats();
+      if (!amount) throw Error("receiver did not specify amount in URI");
       const unsignedPsbt = await this.walletcreatefundedpsbt(address, amount);
       const psbt = await this.walletprocesspsbt(unsignedPsbt);
       const payjoinSender = await new payjoin.SenderBuilder(psbt, pjUri)
