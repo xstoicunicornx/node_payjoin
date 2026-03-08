@@ -93,6 +93,7 @@ export class Receiver {
     | payjoin.OutputsUnknownInterface
     | payjoin.WantsOutputsInterface
     | payjoin.WantsInputsInterface
+    | payjoin.WantsFeeRangeInterface
     | payjoin.ProvisionalProposalInterface
     | undefined;
   interrupt: boolean;
@@ -219,6 +220,16 @@ export class Receiver {
         .commitOutputs()
         .saveAsync(this.persister);
 
+      // TODO: contributeInputs()
+      this.session = await this.session
+        .commitInputs()
+        .saveAsync(this.persister);
+
+      this.session = await this.session
+        .applyFeeRange(BigInt(1), undefined)
+        .saveAsync(this.persister);
+
+      const unsignedPsbt = this.session.psbtToSign();
       console.log("checkOriginalPsbt");
     } catch (error) {
       console.error(error);
