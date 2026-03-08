@@ -21,51 +21,38 @@ class InMemoryReceiverPersisterAsync {
   }
 
   async save(event: any): Promise<void> {
+    console.log("save", event);
     this.events.push(event);
   }
 
   async load(): Promise<any[]> {
+    console.log("load", this.events);
     return this.events;
   }
 
   async close(): Promise<void> {
+    console.log("close");
     this.closed = true;
   }
 }
 
 // TODO: waiting for async support to actually implement these state trannsition callbacks
 class MempoolAcceptanceCallback implements payjoin.CanBroadcast {
-  // private cb: (txHex: string) => Promise<string>;
-  //
-  // constructor(cb: (txHex: string) => Promise<string>) {
-  //   this.cb = cb;
-  // }
   constructor() {}
 
   callback(_tx: ArrayBuffer): boolean {
-    // try {
-    //   const hexTx = Buffer.from(tx).toString("hex");
-    //   const resultJson = await this.cb(JSON.stringify(hexTx));
-    //   const decoded = JSON.parse(resultJson);
-    //   return decoded[0].allowed === true;
-    //   return true;
-    // } catch {
-    //   return false;
-    // }
     return true;
   }
 }
 
 class IsScriptOwnedCallback implements payjoin.IsScriptOwned {
-  // private cb: (txHex: string) => Promise<string>;
-  //
-  // constructor(cb: (txHex: string) => Promise<string>) {
-  //   this.cb = cb;
-  // }
-  constructor() {}
+  returnValue: boolean;
+  constructor(value: boolean) {
+    this.returnValue = value;
+  }
 
   callback(_script: ArrayBuffer): boolean {
-    return false;
+    return this.returnValue;
   }
 }
 
@@ -170,7 +157,7 @@ export class Receiver {
         .checkBroadcastSuitability(undefined, canBroadcast)
         .saveAsync(this.persister);
 
-      const inputsOwned = new IsScriptOwnedCallback();
+      const inputsOwned = new IsScriptOwnedCallback(false);
       this.session = await this.session
         .checkInputsNotOwned(inputsOwned)
         .saveAsync(this.persister);
@@ -180,7 +167,7 @@ export class Receiver {
         .checkNoInputsSeenBefore(inputsSeen)
         .saveAsync(this.persister);
 
-      const outputsOwned = new IsScriptOwnedCallback();
+      const outputsOwned = new IsScriptOwnedCallback(true);
       this.session = await this.session
         .identifyReceiverOutputs(outputsOwned)
         .saveAsync(this.persister);
