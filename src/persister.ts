@@ -117,6 +117,17 @@ export function loadEventsForReceiverPersister(persisterId: number): any[] {
 }
 
 /**
+ * Returns the next available receiver persister id
+ */
+export function receiverPersisterNextId(): number {
+  const db = getDb(RECEIVER_DB_PATH);
+  const rows = db
+    .prepare(`SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM persisters`)
+    .get() as { next_id: number };
+  return rows.next_id;
+}
+
+/**
  * Returns every sender persister id whose `closed` flag is 0 (i.e. still open).
  */
 export function loadOpenSenderPersisterIds(): number[] {
@@ -140,4 +151,15 @@ export function loadEventsForSenderPersister(persisterId: number): any[] {
     )
     .all(persisterId) as { event: string }[];
   return rows.map((r) => JSON.parse(r.event));
+}
+
+/**
+ * Returns the next available sender persister id
+ */
+export function senderPersisterNextId(): number {
+  const db = getDb(SENDER_DB_PATH);
+  const rows = db
+    .prepare(`SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM persisters`)
+    .get() as { next_id: number };
+  return rows.next_id;
 }
