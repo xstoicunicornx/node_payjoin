@@ -53,7 +53,6 @@ class IsScriptOwnedCallback implements payjoin.IsScriptOwned {
   callback(scriptBuf: ArrayBuffer): boolean {
     const script = Buffer.from(scriptBuf).toString("hex");
     const isOwned = this.ownedScripts.includes(script);
-    console.log("scriptHex", script, this.ownedScripts, isOwned);
     return isOwned;
   }
 }

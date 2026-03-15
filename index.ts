@@ -10,22 +10,14 @@ async function main() {
   const amount = BigInt(10000);
   const expiration = BigInt(Math.floor(Date.now() / 1000) + 60 * 5); // 5 min from now
   await receiver.initialize(amount, expiration);
-  // receiver.getInputs();
   const uri = receiver.getPjUri();
-  console.log("uri", uri.pjEndpoint());
   receiver.poll();
 
   const sender = new Sender();
-  sender.wallet.getbalance();
-  sender.getNewPayjoinSender(uri.asString());
-
-  // const senderPersister = new InMemorySenderPersisterAsync(1);
-  // const psbt = originalPsbt();
-  // const withReplyKey = await new payjoin.SenderBuilder(psbt, uri)
-  //   .buildRecommended(BigInt(1000))
-  //   .saveAsync(senderPersister);
-  // console.log("psbt", psbt);
-  // console.log(withReplyKey);
+  await sender.wallet.getbalance();
+  await sender.initialize(uri.asString());
+  await sender.postOriginalPsbt();
+  sender.poll();
 }
 
 main();
