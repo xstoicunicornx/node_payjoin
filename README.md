@@ -1,4 +1,4 @@
-# `payjoin-cli`
+# Node Payjoin Demo
 
 ## A Node payjoin demo in Typescript
 
