@@ -1,11 +1,11 @@
 import { payjoin } from "@xstoicunicornx/payjoin_test";
-import { fetchOhttpKeys, postRequest, sleep, Wallet } from "./utils.ts";
-import { Psbt } from "bitcoinjs-lib";
-import { PlainOutPoint } from "@xstoicunicornx/payjoin_test/dist/generated/payjoin";
+import { fetchOhttpKeys, postRequest, sleep, Wallet } from "./utils";
+import { Psbt, Transaction } from "bitcoinjs-lib";
 import {
-  SQLiteReceiverPersister,
-  receiverPersisterNextId,
-} from "./persister.ts";
+  PlainOutPoint,
+  replayReceiverEventLog,
+} from "@xstoicunicornx/payjoin_test/dist/generated/payjoin";
+import { SQLiteReceiverPersister, receiverPersisterNextId } from "./persister";
 
 const pjDirectory = "https://payjo.in";
 const ohttpRelays = [
@@ -118,13 +118,31 @@ export class Receiver {
     | undefined;
   interrupt: boolean;
   address: string | undefined;
-  originalPsbt: string;
 
-  constructor() {
+  constructor(persisterId?: number) {
     this.wallet = new Wallet("receiver");
-    this.persister = new SQLiteReceiverPersister(receiverPersisterNextId());
+    this.persister = new SQLiteReceiverPersister(
+      persisterId || receiverPersisterNextId(),
+    );
     this.interrupt = false;
-    this.originalPsbt = "";
+    if (persisterId) {
+      const session = replayReceiverEventLog(this.persister);
+      if (session.state().inner.inner instanceof payjoin.Initialized) {
+        this.session = session.state().inner
+          .inner as payjoin.InitializedInterface;
+      } else {
+        throw Error(
+          `receiver session with persister id ${persisterId} is borked`,
+        );
+      }
+    }
+  }
+
+  from(persisterId: number) {
+    this.wallet = new Wallet("receiver");
+    this.persister = new SQLiteReceiverPersister(persisterId);
+    this.interrupt = false;
+    return this;
   }
 
   getOhttpKeys() {
@@ -138,7 +156,6 @@ export class Receiver {
   async initialize(amount?: bigint, expiration?: bigint) {
     const address = await this.wallet.getnewaddress();
     const ohttpKeys = await this.getOhttpKeys();
-    console.log("address", address, true);
     let session = new payjoin.ReceiverBuilder(
       address,
       pjDirectory,
@@ -158,28 +175,27 @@ export class Receiver {
 
   async poll() {
     if (!this.session) throw Error("receiver has not been initialized");
-    if (!this.address) throw Error("receiver address was not set properly");
+    if (!(this.session instanceof payjoin.Initialized))
+      throw Error("receiver not in initialized state");
+    // if (!this.address) throw Error("receiver address was not set properly");
+
     this.interrupt = false;
     while (!this.interrupt) {
       console.log("receiver polling...");
-      if (this.session instanceof payjoin.Initialized) {
-        console.log("session state initialized");
-        const random_index = Math.floor(Math.random() * ohttpRelays.length);
-        const { request, clientResponse } = this.session.createPollRequest(
-          ohttpRelays[random_index],
-        );
-        const response = await postRequest(request);
-        const stateTransition = this.session
-          .processResponse(await response.arrayBuffer(), clientResponse)
-          .save(this.persister);
-        if (
-          stateTransition instanceof
-          payjoin.InitializedTransitionOutcome.Progress
-        ) {
-          this.session = stateTransition.inner.inner;
-          this.checkOriginalPsbt();
-          return;
-        }
+      const random_index = Math.floor(Math.random() * ohttpRelays.length);
+      const { request, clientResponse } = this.session.createPollRequest(
+        ohttpRelays[random_index],
+      );
+      const response = await postRequest(request);
+      const stateTransition = this.session
+        .processResponse(await response.arrayBuffer(), clientResponse)
+        .save(this.persister);
+      if (
+        stateTransition instanceof payjoin.InitializedTransitionOutcome.Progress
+      ) {
+        this.session = stateTransition.inner.inner;
+        this.checkOriginalPsbt();
+        return;
       }
       await sleep(2);
     }
@@ -193,7 +209,7 @@ export class Receiver {
   // NOTE: nothing is actually being checked just walking through state transitions
   async checkOriginalPsbt() {
     try {
-      if (!this.address) throw Error("receiver address was not set properly");
+      // if (!this.address) throw Error("receiver address was not set properly");
       if (!(this.session instanceof payjoin.UncheckedOriginalPayload))
         throw Error("receiver is not in correct state to check original psbt");
 
@@ -202,7 +218,42 @@ export class Receiver {
         .checkBroadcastSuitability(undefined, canBroadcast)
         .save(this.persister);
 
-      const inputsOwned = new IsScriptOwnedCallback();
+      // check original tx for which inputs and outputs are ours
+      // can't do this within IsScriptOwnedCallback because it
+      // doesn't support async
+      const originalTxBuf = this.session.extractTxToScheduleBroadcast();
+      const originalTx = Transaction.fromBuffer(new Uint8Array(originalTxBuf));
+      const prevOuts: any[] = [];
+      const ownedScriptsHex: string[] = [];
+      for (let txIn of originalTx.ins) {
+        const txidArray = Array.from(txIn.hash).map((b) =>
+          b.toString(16).padStart(2, "0"),
+        );
+        txidArray.reverse();
+        const txid = txidArray.join("");
+        const prevOut = await this.wallet.gettxout(txid, txIn.index);
+        if (prevOut) {
+          const scriptAddr = prevOut["scriptPubKey"]["address"];
+          const scriptHex = prevOut["scriptPubKey"]["hex"];
+          const addrInfo = await this.wallet.getaddressinfo(scriptAddr);
+          if (scriptHex && addrInfo && addrInfo["ismine"]) {
+            ownedScriptsHex.push(scriptHex);
+          }
+        }
+        prevOuts.push(prevOut);
+      }
+
+      for (let txOut of originalTx.outs) {
+        const scriptHex = Buffer.from(txOut.script).toString("hex");
+        const decodedScript = await this.wallet.decodescript(scriptHex);
+        const scriptAddr = decodedScript["address"];
+        const addrInfo = await this.wallet.getaddressinfo(scriptAddr);
+        if (addrInfo && addrInfo["ismine"]) {
+          ownedScriptsHex.push(scriptHex);
+        }
+      }
+
+      const inputsOwned = new IsScriptOwnedCallback(ownedScriptsHex);
       this.session = this.session
         .checkInputsNotOwned(inputsOwned)
         .save(this.persister);
@@ -212,8 +263,7 @@ export class Receiver {
         .checkNoInputsSeenBefore(inputsSeen)
         .save(this.persister);
 
-      const { scriptPubKey } = await this.wallet.getaddressinfo(this.address);
-      const outputsOwned = new IsScriptOwnedCallback([scriptPubKey]);
+      const outputsOwned = new IsScriptOwnedCallback(ownedScriptsHex);
       this.session = this.session
         .identifyReceiverOutputs(outputsOwned)
         .save(this.persister);

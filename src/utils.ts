@@ -150,7 +150,19 @@ export class Wallet {
     return this.command("sendrawtransaction", [hex]);
   }
 
+  decoderawtransaction(hex: string) {
+    return this.command("decoderawtransaction", [hex]);
+  }
+
   decodepsbt(psbt: string) {
     return this.command("decodepsbt", [psbt]);
+  }
+
+  gettxout(txid: string, vout: number) {
+    return this.command("gettxout", [txid, vout]);
+  }
+
+  decodescript(script: string) {
+    return this.command("decodescript", [script]);
   }
 }
