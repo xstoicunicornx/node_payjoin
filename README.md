@@ -2,7 +2,7 @@
 
 ## A Node payjoin demo in Typescript
 
-This implementation's goal was to replicate the functionality of `payjoin-cli`, the reference implementation for the payjoin protocol, written using the [Payjoin](https://www.npmjs.com/package/payjoin) npm package. The current npm package was a bit out of date so this is currently using my forked [payjoin_test](https://www.npmjs.com/package/@xstoicunicornx/payjoin_test).
+This implementation's goal was to replicate the functionality of `payjoin-cli`, the reference implementation for the payjoin protocol, written using the [payjoin](https://www.npmjs.com/package/payjoin) npm package. The current npm package was a bit out of date so this is currently using my forked [payjoin_test](https://www.npmjs.com/package/@xstoicunicornx/payjoin_test).
 
 Most of this README was also stolen from the [payjoin-cli](https://github.com/payjoin/rust-payjoin/tree/master/payjoin-cli).
 
